@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Button,
   Input,
@@ -19,23 +19,28 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { getFilteredProgramAccounts } from '@solana/spl-name-service';
-import { claimDepositedToken, claimGainedNft, claimWinnedNFT } from '../../actions';
+import { claimDepositedToken, claimGainedNft, claimWinnedNFT, getTicketFromLottery } from '../../actions';
+import { useParams } from 'react-router';
+import { Link } from 'react-router-dom';
+import moment from 'moment';
 
 
 export const ClaimView = () => {
-  const [form] = Form.useForm();
+  const { id } = useParams<{id:string}>();
   
   const connection = useConnection();
   const wallet = useWallet();
   const userTokenAccounts = useUserAccounts();
-  const [lotteryID, setLotteryID] = useState('');
-  const [lotteryData, setLotteryData] = useState({} as LotteryData);
+  const [lotteryID,] = useState(id);
+  const [lotteryData, setLotteryData] = useState({} as any);
   const [tickets, setTickets] = useState([] as any[]);
 
-  React.useEffect(() => {
-    let lotteryid = localStorage.getItem('lotteryid');
-    setLotteryID(lotteryid ? lotteryid : '');
-  });
+  useEffect(() => {
+    if(wallet.connected && lotteryID != ""){
+      loadOfClaim();
+    }
+
+  }, [lotteryID, wallet.connected]);
 
   async function loadOfClaim() {
     loadLotteryDataOfClaim();
@@ -105,7 +110,7 @@ export const ClaimView = () => {
     console.log("claimming ...")
     const filters = [
       {
-        dataSize: 216,
+        dataSize: 392,
       },
       {
         memcmp: {
@@ -122,6 +127,7 @@ export const ClaimView = () => {
     nftMetaAccounts.forEach((nftMetaAccount)=>{
       const _nftMetaId = nftMetaAccount.publicKey.toBase58();
       const _nftMetaData:any = decodeNFTMetaData(nftMetaAccount.accountInfo.data);
+      
       if(_nftMetaData.nftNumber.toNumber() === ticketNumber){
         nftMetaId = _nftMetaId;
         nftMetaData = _nftMetaData;
@@ -168,75 +174,100 @@ export const ClaimView = () => {
   
     return Buffer.from(accountInfo.data);
   }
+  async function getTicketOne() {
+    getTicketFromLottery(connection, wallet, lotteryID, lotteryData)
+      .then(({txid,slot})=>{
+        console.log("txid - ",txid);
+        loadOfClaim();
+      })
+      .catch((error)=>{
+        console.log(error);
+      })
+  }
+  function getLotteryStatus(lotteryData:any){
+    const curTimestamp = moment().unix();
+    if(lotteryData.endLotteryAt.toNumber() < curTimestamp){
+      return "Ended";
+    }
+    return lotteryData.state === 0?"Created":lotteryData.state === 1?"Started":"Ended";
+  }
   function getTicketStatus(state:string){
     return state === "0"?"Bought":state === "1"?"Winned":state === "2"?"NotWinned":"Claimed";
   }
   return (
     <>
       <div>
-        <div style={{marginBottom: 30 + 'px'}}>Lottery ID
-          <Input value={lotteryID} defaultValue={lotteryID} onChange={e=> setLotteryID(e.target.value)} />
-        </div>
-        <Form
-          className='claim'
-          form={form} 
-          name="basic"
-          labelCol={{
-            span: 8,
-          }}
-          wrapperCol={{
-            span: 16,
-          }}
-          initialValues={{
-            remember: true,
-          }}
-          autoComplete="off">
-          
-          <Form.Item
-            wrapperCol={{
-              offset: 8,
-              span: 16,
-            }}
-          >
-            <Button htmlType="submit" onClick={e => loadOfClaim()}>
-              Load Tickets
-            </Button>
-            { 
-            tickets.map((ticket)=>{
-              return(
-                <div >
-                    <br/>
-                    ticket id - {ticket.ticketId}
-                    <br/>
-                    ticket status - {getTicketStatus(ticket.state.toString())}
-                    <br/>
-                    {
-                      ticket.state === TicketState.Winned ?
-                      <div>
-                        <br/>
-                        winned nft number - {ticket.winnedNFTNumber.toNumber()}
-                        <br/>
-                        <Button htmlType="submit" onClick={e => claimNFTOne(ticket.ticketId, ticket.winnedNFTNumber.toNumber())}>
-                          Claim NFT
-                        </Button>
-                      </div>
-                      : ticket.state === TicketState.NotWinned ?
-                      <Button htmlType="submit" onClick={e => claimTokenOne(ticket.ticketId)}>
-                      claim token
-                      </Button>
-                      : ticket.state === TicketState.Claimed ? "Claimed":"Bought"
-                    }
-                    <br/>
-                    -----------------------------------------------------------
-                    <br/>
-                </div>
-              )
-            })
-            }
-          </Form.Item>
+        <br />
+        {
+          !wallet.connected?"please connect your wallet":
+          lotteryData.state === undefined?"can't load lottery data":
+          getLotteryStatus(lotteryData) == "Started" ?
+            <div>
+              <Button htmlType="submit" onClick={e => getTicketOne()}>
+                Get Ticket
+              </Button>
+              <br />
+              <div>
+                My Tickets : {tickets.length}
+              </div>
+              {
+                tickets.map((ticket) => {
+                  return (
+                    <div >
+                      <br />
+                      ticket id - {ticket.ticketId}
+                      <br />
+                    </div>
+                  )
+                })
+              }
+            </div>
 
-        </Form>
-        
+            : getLotteryStatus(lotteryData) == "Ended" ?
+              <div>
+                <br />
+                {
+                  tickets.map((ticket) => {
+                    return (
+                      <div >
+                        <br />
+                        ticket id - {ticket.ticketId}
+                        <br />
+                        ticket status - {getTicketStatus(ticket.state.toString())}
+                        <br />
+                        {
+                          ticket.state === TicketState.Winned ?
+                            <div>
+                              <br />
+                              winned nft number - {ticket.winnedNFTNumber.toNumber()}
+                              <br />
+                              <Button htmlType="submit" onClick={e => claimNFTOne(ticket.ticketId, ticket.winnedNFTNumber.toNumber())}>
+                                Claim NFT
+                              </Button>
+                            </div>
+                            : ticket.state === TicketState.NotWinned ?
+                              <Button htmlType="submit" onClick={e => claimTokenOne(ticket.ticketId)}>
+                                claim token
+                              </Button>
+                              : ticket.state === TicketState.Claimed ? "Claimed" : "Bought"
+                        }
+                        <br />
+                        -----------------------------------------------------------
+                        <br />
+                      </div>
+                    )
+                  })
+                }
+                {
+                  tickets.length == 0 && "No tickets"
+                }
+              </div>
+              : "Not started yet"
+
+              
+        }
+        <br />
+        <Link to={`/lottery`}>Back</Link>
       </div>
     </>
   );

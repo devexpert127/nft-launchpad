@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
 import { ConnectButton, CurrentUserBadge } from '@oyster/common';
@@ -66,15 +66,9 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       <Link to={`/store-list`}>
         <Button className="app-btn">Store</Button>
       </Link>
-      <Link to={`/create-lottery`}>
+      <Link to={`/lottery`}>
         <Button className="app-btn">Lottery</Button>
       </Link>
-      {/* <Link to={`/get-ticket`}>
-        <Button className="app-btn">Get ticket</Button>
-      </Link>
-      <Link to={`/claim`}>
-        <Button className="app-btn">Claim</Button>
-      </Link> */}
     </div>
   );
 };
@@ -93,20 +87,14 @@ const MetaplexMenu = () => {
           overlay={
             <Menu>
               <Menu.Item>
-                <Link to={`/`}>
-                  <Button className="app-btn">Explore</Button>
+                <Link to={`/store-list`}>
+                  <Button className="app-btn">Store</Button>
                 </Link>
               </Menu.Item>
+             
               <Menu.Item>
-                <Link to={`/artworks`}>
-                  <Button className="app-btn">
-                    {connected ? 'My Items' : 'Artworks'}
-                  </Button>
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <Link to={`/artists`}>
-                  <Button className="app-btn">Creators</Button>
+                <Link to={`/lottery`}>
+                  <Button className="app-btn">Lottery</Button>
                 </Link>
               </Menu.Item>
             </Menu>
@@ -122,6 +110,10 @@ const MetaplexMenu = () => {
 
 export const AppBar = () => {
   const { connected } = useWallet();
+  const [urlHash, setUrlHash] = useState(window.location.hash);
+  useEffect(() => {
+    setUrlHash(window.location.hash);
+  }, [window.location]);
 
   return (
     <>
@@ -129,6 +121,7 @@ export const AppBar = () => {
         {window.location.hash !== '#/analytics' && <Notifications />}
         <div className="divider" />
         <MetaplexMenu />
+        
       </div>
       {connected ? (
         <div className="app-right app-bar-box">

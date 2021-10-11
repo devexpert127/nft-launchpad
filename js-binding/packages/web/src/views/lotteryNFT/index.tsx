@@ -19,7 +19,7 @@ import {
   decodeTicket,
   Ticket,
   LotteryState,
-  lotteryTimeToEnd,
+  TicketState,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import moment from 'moment';
@@ -28,16 +28,23 @@ import BN from 'bn.js';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { getFilteredProgramAccounts } from '@solana/spl-name-service';
 import Countdown from '../../components/Countdown';
+import { Link } from 'react-router-dom';
 
+enum ViewState {
+  LotteryListView,
+  LotteryCreateView,
+}
 export const CreateLotteryNFTView = () => {
   const [form] = Form.useForm();
+  
   
   const connection = useConnection();
   const wallet = useWallet();
   const userTokenAccounts = useUserAccounts();
+
   const [storeID, setStoreID] = useState('');
   const [mintAddress, setMintAddress] = useState(QUOTE_MINT.toBase58());
-  const [enddate, setEndDate] = useState(moment().unix()+2 * 3600);
+  const [enddate, setEndDate] = useState(moment().unix()+3 * 60);
   const [ticketPrice, setTicketPrice] = useState(1);
   const [ticketAmount, setTicketAmount] = useState(5);
   const [nftAmount, setNFTAmount] = useState(3);
@@ -46,23 +53,25 @@ export const CreateLotteryNFTView = () => {
   const [lotteryStatus, setLotteryStatus] = useState('');
   const [lotteryStoreId, setLotteryStoreId] = useState('');
   const [boughtTicketAmount, setBoughtTicketAmount] = useState(0);
-  const [lotteryData, setLotteryData] = useState({} as LotteryData);
+  const [lotteryData, setLotteryData] = useState({} as any);
 
   const [lotteries, setLotteries] = useState([] as any[]);
   const [tickets, setTickets] = useState([] as any[]);
 
-  const [isListView, setIsListView] = useState(true);
+  const [viewState, setViewState] = useState(ViewState.LotteryListView);
   useEffect(() => {
     if(storeID == ""){
       let storeid = localStorage.getItem('storeid');
       setStoreID(storeid ? storeid : '');
     }
-    if(storeID == ""){
+    if(lotteryID == ""){
       let lotteryid = localStorage.getItem('lotteryid');
       setLotteryID(lotteryid ? lotteryid : '');
     }
 
-    loadLotteries();
+    if(wallet.connected){
+      loadLotteries();
+    }
 
   }, [storeID, lotteryID]);
 
@@ -165,16 +174,6 @@ export const CreateLotteryNFTView = () => {
     })
   }
 
-  async function loadOfClaim() {
-    loadLotteryDataOfClaim();
-    loadTicketsOfClaim();
-  }
-  async function loadLotteryDataOfClaim(){
-    let lotteryBuffer = await loadAccount(connection,toPublicKey(lotteryID),toPublicKey(programIds().lottery));
-    let lotteryData = decodeLotteryData(lotteryBuffer);
-    setLotteryData(lotteryData);
-  }
-
   async function loadLotteries() {
     console.log("loading lotteries ...")
     const filters = [
@@ -198,116 +197,7 @@ export const CreateLotteryNFTView = () => {
       console.log(error);
     })
   }
-  async function loadTicketsOfClaim() {
-    console.log("loading tickets ...")
-    const filters = [
-      {
-        dataSize: 80
-      },
-      {
-        memcmp: {
-          offset: 0,
-          bytes: wallet.publicKey?.toBase58()
-        }
-      },
-      {
-        memcmp: {
-          offset: 32,
-          bytes: lotteryID
-        }
-      },
-    ];
-    getFilteredProgramAccounts(connection,toPublicKey(programIds().lottery),filters)
-    .then((ticketAccounts:{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer>; }[])=>{
-      console.log("bought ticket amount",ticketAccounts.length)
-      let _tickets:Ticket[] = [];
-      ticketAccounts.forEach((ticket)=>{
-        const ticketData:any = decodeTicket(ticket.accountInfo.data);
-        ticketData.ticketId = ticket.publicKey.toBase58();
-
-        _tickets.push(ticketData);
-      })
-      setTickets(_tickets);
-    })
-    .catch((error:any)=>{
-      console.log(error);
-    })
-  }
   
-  async function claimTokenOne(ticketId:string) {
-    console.log("claimming ...")
-    claimDepositedToken(
-      connection,
-      wallet,
-      lotteryID,
-      ticketId,
-      lotteryData
-    )
-    .then(({txid,slot})=>{
-      console.log("claim txid - ",txid);
-      loadTicketsOfClaim();
-    })
-    .catch((error)=>{
-      console.log(error);
-      loadTicketsOfClaim();
-    })
-  }
-  async function claimNFTOne(ticketId:string, ticketNumber:number) {
-    console.log("claimming ...")
-    const filters = [
-      {
-        dataSize: 184,
-      },
-      {
-        memcmp: {
-          offset: 0,
-          bytes: lotteryData.lotteryStoreId
-        }
-      },
-      
-    ];
-    const nftMetaAccounts = await getFilteredProgramAccounts(connection,toPublicKey(programIds().store),filters);
-    let nftMetaId:any = "";
-    let nftMetaData:any= null;
-
-    nftMetaAccounts.forEach((nftMetaAccount)=>{
-      const _nftMetaId = nftMetaAccount.publicKey.toBase58();
-      const _nftMetaData:any = decodeNFTMetaData(nftMetaAccount.accountInfo.data);
-      if(_nftMetaData.nftNumber.toNumber() === ticketNumber){
-        nftMetaId = _nftMetaId;
-        nftMetaData = _nftMetaData;
-      }
-    })
-    let nftTokenAccount = userTokenAccounts.accountByMint.get(nftMetaData.mint)?.pubkey;
-    if(nftMetaId === ""){
-      console.log("not found nft meta");
-      return;
-    }
-    
-    claimGainedNft(
-      connection,
-      wallet,
-      lotteryID,
-      ticketId,
-      nftTokenAccount,
-      nftMetaId,
-      nftMetaData,
-      lotteryData
-    )
-    .then(({txid,slot})=>{
-      console.log("claim txid - ",txid);
-      loadTicketsOfClaim();
-    })
-    .catch((error)=>{
-      console.log(error);
-      loadTicketsOfClaim();
-    })
-  }
-  function getTicketStatus(state:string){
-    return state === "0"?"Bought":state === "1"?"Winned":state === "2"?"NotWinned":"Claimed";
-  }
-  
-
   async function loadAccount(
     connection: Connection,
     address: PublicKey,
@@ -325,21 +215,30 @@ export const CreateLotteryNFTView = () => {
     return Buffer.from(accountInfo.data);
   }
   function viewLotteries(){
-    setIsListView(true);
+
+    setViewState(ViewState.LotteryListView);
+    if(wallet.connected){
+      loadLotteries();
+    }
   }
   function goToCreateLottery(){
-    setIsListView(false);
+    setViewState(ViewState.LotteryCreateView);
   }
-
-
-
+  function goToTicketsView(lottery:any){
+    
+    setLotteryID(lottery.lotteryId);
+  }
 
 
   return (
     <>
       {
-        isListView?
+        viewState == ViewState.LotteryListView?
         <div>
+          <Button htmlType="submit" style={{marginTop: 30 + 'px'}} onClick={e => goToCreateLottery()}>
+            Create Lottery
+          </Button>
+          <br />
           { 
             lotteries.map((lottery)=>{
               return(
@@ -348,21 +247,21 @@ export const CreateLotteryNFTView = () => {
                       timestamp={lottery.endLotteryAt.toNumber()}
                       />
                     <br/>
-                    lottery id - {lottery.lotteryId} &nbsp;&nbsp;&nbsp; 
+                    lottery id - {lottery.lotteryId} 
                     <br/>
                     store id - {lottery.lotteryStoreId}
                     <br/>
                     lottery status - {getLotteryStatus(lottery.state.toString())}
                     <br/>
+                    <Link to={`/lottery-details/`+lottery.lotteryId}>View Details</Link>
                     {
                       lottery.state === LotteryState.Created ?
-                      <div>
-                        <Button htmlType="submit" onClick={e => start(lottery.lotteryStoreId)}>
+                        <Button htmlType="submit" style={{marginLeft: 10 + 'px'}} onClick={e => start(lottery.lotteryStoreId)}>
                           Start Lottery
                         </Button>
-                      </div>
                       : ""
                     }
+                    
                     <br/>
                     -----------------------------------------------------------
                     <br/>
@@ -370,11 +269,9 @@ export const CreateLotteryNFTView = () => {
               )
             })
             }
-          <Button htmlType="submit" style={{marginTop: 30 + 'px'}} onClick={e => goToCreateLottery()}>
-            Create Lottery
-          </Button>
+          
         </div>
-        :
+        :viewState == ViewState.LotteryCreateView?
         <div>
             <div>Store ID: 
               <Input value={storeID} defaultValue={storeID} onChange={e=> setStoreID(e.target.value)} />
@@ -413,6 +310,7 @@ export const CreateLotteryNFTView = () => {
             }
             
         </div>
+        :""
         
       }
     </>

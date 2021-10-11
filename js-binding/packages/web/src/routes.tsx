@@ -29,9 +29,9 @@ export function Routes() {
             <Route exact path="/join-raffle" component={() => <JoinRaffleView />} />
             <Route exact path="/store-detail/:id/" component={() => <MintNFTStoreView />} />
             <Route exact path="/store-list" component={() => <StoreListView />} />
-            <Route exact path="/create-lottery" component={() => <CreateLotteryNFTView />} />
+            <Route exact path="/lottery" component={() => <CreateLotteryNFTView />} />
             <Route exact path="/get-ticket" component={() => <GetTicketView />} />
-            <Route exact path="/claim" component={() => <ClaimView />} />
+            <Route exact path="/lottery-details/:id/" component={() => <ClaimView />} />
             <Route
               exact
               path="/analytics"

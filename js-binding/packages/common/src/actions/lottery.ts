@@ -357,6 +357,52 @@ export async function startLottery(
   );
 }
 
+export async function endLottery(
+  creator: StringPublicKey,
+  lotteryStore: StringPublicKey,
+  instructions: TransactionInstruction[],
+) {
+  const lotteryProgramId = programIds().lottery;
+
+  const data = Buffer.from([4]);
+
+  const lotteryKey: StringPublicKey = (
+    await findProgramAddress(
+      [
+        Buffer.from(LOTTERY_PREFIX),
+        toPublicKey(lotteryProgramId).toBuffer(),
+        toPublicKey(lotteryStore).toBuffer(),
+      ],
+      toPublicKey(lotteryProgramId),
+    )
+  )[0];
+
+  const keys = [
+    {
+      pubkey: toPublicKey(creator),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(lotteryKey),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: SYSVAR_CLOCK_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+  instructions.push(
+    new TransactionInstruction({
+      keys,
+      programId: toPublicKey(lotteryProgramId),
+      data: data,
+    }),
+  );
+}
+
 export async function setLotteryAuthority(
   lottery: StringPublicKey,
   currentAuthority: StringPublicKey,
