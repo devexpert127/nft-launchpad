@@ -100,9 +100,14 @@ export const MintNFTStoreView = () => {
       if (nftmeta.uri.length > 0) {
         const imgurl = await getImageFromArweave(nftmeta.uri);
         nftlist.push({key: mint.publicKey, nft: nftmeta, image: imgurl});
-        setNFTMetas(nftlist);
+        console.log(nftlist.length);
+        if (mints.length === nftlist.length) {
+          setNFTMetas(nftlist);
+        }
       }
     });
+
+    return nftlist;
   }
   
   async function getImageFromArweave(url : string): Promise<string> {
