@@ -93,6 +93,9 @@ export const MintNFTStoreView = () => {
 
     mints.forEach(async mint => {
       const nftmeta = decodeNFTMetaData(mint.accountInfo.data);
+      nftmeta.name = nftmeta.name.replaceAll('\u0000', '');
+      nftmeta.uri = nftmeta.uri.replaceAll('\u0000', '');
+      nftmeta.symbol = nftmeta.symbol.replaceAll('\u0000', '');
       console.log(nftmeta);
       if (nftmeta.uri.length > 0) {
         const imgurl = await getImageFromArweave(nftmeta.uri);
