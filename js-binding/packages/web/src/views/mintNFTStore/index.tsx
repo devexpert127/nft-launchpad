@@ -75,11 +75,12 @@ export const MintNFTStoreView = () => {
 
     getFilteredProgramAccounts(connection, toPublicKey(programIds().store), filters)
       .then(async (mints:{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer>; }[])=>{
-        mintsTemp = [];
+        setNFTMetas([]);
         await updateNFTMetaData(mints).then(function(data){
-          setNFTMetas(mintsTemp);
+          console.log(nftMetas);
+          // setNFTMetas(mintsTemp);
           setMintAddresses(mints);
-          setMintCount(mintsTemp.length);
+          setMintCount(nftMetas.length);
         }) ;
       })
       .catch((error:any)=>{
@@ -88,14 +89,15 @@ export const MintNFTStoreView = () => {
   }
 
   async function updateNFTMetaData(mints:{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer>; }[]) {
-    mintsTemp = [];
+    let nftlist: {key: PublicKey; nft: NFTMeta, image: string}[] = [];
 
     mints.forEach(async mint => {
       const nftmeta = decodeNFTMetaData(mint.accountInfo.data);
       console.log(nftmeta);
       if (nftmeta.uri.length > 0) {
         const imgurl = await getImageFromArweave(nftmeta.uri);
-        mintsTemp.push({key: mint.publicKey, nft: nftmeta, image: imgurl});
+        nftlist.push({key: mint.publicKey, nft: nftmeta, image: imgurl});
+        setNFTMetas(nftlist);
       }
     });
   }
