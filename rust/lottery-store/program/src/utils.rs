@@ -75,3 +75,17 @@ pub struct TokenBurnParams<'a: 'b, 'b> {
     /// token_program
     pub token_program: AccountInfo<'a>,
 }
+
+pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> ProgramResult {
+    if account.owner != owner {
+        msg!(
+            "{} Owner Invalid, Expected {}, Got {}",
+            account.key,
+            owner,
+            account.owner
+        );
+        Err(LotteryError::IncorrectOwner.into())
+    } else {
+        Ok(())
+    }
+}

@@ -1,9 +1,8 @@
 use crate::{
-  errors::StoreError,
   processor::{
-      NFTMeta, StoreData, MintNFTArgs, MAX_NFTMETA_LEN, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH
+    NFTMeta, StoreData, MintNFTArgs, MAX_NFTMETA_LEN, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH
   },
-  utils::{create_or_allocate_account_raw},
+  utils::{create_or_allocate_account_raw, assert_owned_by},
 };
 
 use {
@@ -44,6 +43,8 @@ fn parse_accounts<'a, 'b: 'a>(
     rent: next_account_info(account_iter)?,
     system: next_account_info(account_iter)?,
   };
+
+  assert_owned_by(accounts.store_id, program_id)?;
   Ok(accounts)
 }
 
