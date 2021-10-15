@@ -93,4 +93,4 @@ impl NFTMeta {
         let nftmeta: NFTMeta = try_from_slice_unchecked(&a.data.borrow_mut())?;
         Ok(nftmeta)
     }
-}
+} 
