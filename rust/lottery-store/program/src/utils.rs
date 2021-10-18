@@ -1,4 +1,7 @@
 use {
+    crate::{
+        errors::StoreError,
+    },
     solana_program::{
         account_info::AccountInfo,
         entrypoint::ProgramResult,
@@ -84,7 +87,7 @@ pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> ProgramResult {
             owner,
             account.owner
         );
-        Err(LotteryError::IncorrectOwner.into())
+        Err(StoreError::IncorrectOwner.into())
     } else {
         Ok(())
     }
