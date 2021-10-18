@@ -92,3 +92,11 @@ pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> ProgramResult {
         Ok(())
     }
 }
+
+pub fn assert_token_program_matches_package(token_program_info: &AccountInfo) -> ProgramResult {
+    if *token_program_info.key != spl_token::id() {
+        return Err(StoreError::InvalidTokenProgram.into());
+    }
+
+    Ok(())
+}

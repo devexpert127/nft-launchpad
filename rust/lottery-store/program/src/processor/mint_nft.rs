@@ -1,8 +1,9 @@
 use crate::{
+  errors::StoreError,
   processor::{
     NFTMeta, StoreData, MintNFTArgs, MAX_NFTMETA_LEN, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH
   },
-  utils::{create_or_allocate_account_raw, assert_owned_by},
+  utils::{create_or_allocate_account_raw, assert_owned_by, assert_token_program_matches_package},
 };
 
 use {
@@ -45,6 +46,12 @@ fn parse_accounts<'a, 'b: 'a>(
   };
 
   assert_owned_by(accounts.store_id, program_id)?;
+  assert_token_program_matches_package(accounts.token_program)?;
+
+  if *accounts.token_program.key != spl_token::id() {
+    return Err(StoreError::InvalidTokenProgram.into());
+  }
+
   Ok(accounts)
 }
 
