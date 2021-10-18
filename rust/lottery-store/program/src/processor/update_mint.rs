@@ -2,10 +2,11 @@ use crate::{
   processor::{
       NFTMeta, MintNFTArgs, MAX_URI_LENGTH
   },
+  utils::{assert_owned_by},
 };
 
 use {
-  borsh::{BorshDeserialize, BorshSerialize},
+  borsh::{BorshSerialize},
   solana_program::{
       account_info::{next_account_info, AccountInfo},
       entrypoint::ProgramResult,
@@ -32,6 +33,9 @@ fn parse_accounts<'a, 'b: 'a>(
     rent: next_account_info(account_iter)?,
     system: next_account_info(account_iter)?,
   };
+
+  assert_owned_by(accounts.nftmeta, program_id)?;
+
   Ok(accounts)
 }
 
