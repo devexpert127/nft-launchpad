@@ -34,6 +34,8 @@ pub struct CreateLotteryArgs {
     pub ticket_amount: u32,
     /// ticket amount for this lottery
     pub nft_amount: u32,
+    /// max ticket count per wallet
+    pub max_ticket_per_wallet: u32
 }
 
 struct Accounts<'a, 'b: 'a> {
@@ -120,6 +122,7 @@ pub fn create_lottery(
         nft_amount: args.nft_amount as u64,
         ticket_price: args.ticket_price,
         ticket_amount: args.ticket_amount as u64,
+        max_ticket_per_wallet: args.max_ticket_per_wallet as u64,
         sold_amount: 0
     }
     .serialize(&mut *accounts.lottery.data.borrow_mut())?;

@@ -95,6 +95,8 @@ export class LotteryData {
   ticketAmount: BN;
   /// existing ticket amount
   soldAmount: BN;
+  /// max ticket per wallet
+  maxTicketPerWallet: BN;
 
   constructor(args: {
     authority: StringPublicKey;
@@ -108,6 +110,7 @@ export class LotteryData {
     ticketPrice: BN;
     ticketAmount: BN;
     soldAmount: BN;
+    maxTicketPerWallet: BN;
   }) {
     this.authority = args.authority;
     this.tokenMint = args.tokenMint;
@@ -120,8 +123,10 @@ export class LotteryData {
     this.ticketPrice = args.ticketPrice;
     this.ticketAmount = args.ticketAmount;
     this.soldAmount = args.soldAmount;
+    this.maxTicketPerWallet = args.maxTicketPerWallet;
   }
 }
+
 export const lotteryTimeToEnd = (endedAt: BN) => {
   const now = moment().unix();
   const ended = { days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -162,17 +167,21 @@ export class CreateLotteryArgs {
   ticketAmount: number;
   /// ticket amount for this lottery
   nftAmount: number;
+  /// max ticket per wallet
+  maxTicketPerWallet: number;
 
   constructor(args: {
     endLotteryAt: BN;
     ticketPrice: BN;
     ticketAmount: number;
     nftAmount: number;
+    maxTicketPerWallet: number;
   }) {
     this.endLotteryAt = args.endLotteryAt;
     this.ticketPrice = args.ticketPrice;
     this.ticketAmount = args.ticketAmount;
     this.nftAmount = args.nftAmount;
+    this.maxTicketPerWallet = args.maxTicketPerWallet;
   }
 }
 
@@ -206,6 +215,7 @@ export const LOTTERY_SCHEMA = new Map<any, any>([
         ['ticketPrice', 'u64'],
         ['ticketAmount', 'u64'],
         ['soldAmount', 'u64'],
+        ['maxTicketPerWallet', 'u64'],
       ],
     },
   ],
@@ -581,7 +591,7 @@ export function claimNFT(
       isWritable: false,
     },
   ];
-  console.log(keys);
+
   instructions.push(
     new TransactionInstruction({
       keys,

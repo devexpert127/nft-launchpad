@@ -85,6 +85,8 @@ pub struct LotteryData {
     pub ticket_amount: u64,
     /// current sold ticket count
     pub sold_amount: u64,
+    /// max ticket per wallet
+    max_ticket_per_wallet: u64,
 }
 
 impl LotteryData {

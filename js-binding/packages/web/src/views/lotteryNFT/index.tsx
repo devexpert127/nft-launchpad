@@ -48,6 +48,7 @@ export const CreateLotteryNFTView = () => {
   const [ticketPrice, setTicketPrice] = useState(1);
   const [ticketAmount, setTicketAmount] = useState(5);
   const [nftAmount, setNFTAmount] = useState(3);
+  const [maxTicketPerWallet, setMaxTicketPerWallet] = useState(3);
 
   const [lotteryID, setLotteryID] = useState('');
   const [lotteryStatus, setLotteryStatus] = useState('');
@@ -89,7 +90,8 @@ export const CreateLotteryNFTView = () => {
       endLotteryAt: new BN(enddate),
       ticketPrice: new BN(ticketPrice * Math.pow(10,9)),
       ticketAmount: ticketAmount,
-      nftAmount: nftAmount
+      nftAmount: nftAmount,
+      maxTicketPerWallet: maxTicketPerWallet
     })).then(({txid,slot,lottery})=>{
       console.log(txid);
       lotteryId = lottery;
@@ -292,7 +294,11 @@ export const CreateLotteryNFTView = () => {
               <Input type="number" value={ticketAmount} defaultValue={ticketAmount} onChange={e=> setTicketAmount(parseInt(e.target.value))} />
             </div>
 
-            <div>NFT Amount 
+            <div>Max Ticket Per Wallet:
+              <Input type="number" value={maxTicketPerWallet} defaultValue={maxTicketPerWallet} onChange={e=> setMaxTicketPerWallet(parseInt(e.target.value))} />
+            </div>
+
+            <div>NFT Amount:
               <Input type="number" value={nftAmount} defaultValue={nftAmount} onChange={e=> setNFTAmount(parseInt(e.target.value))} />
             </div>
 
