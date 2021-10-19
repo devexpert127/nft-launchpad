@@ -180,7 +180,7 @@ export const CreateLotteryNFTView = () => {
     console.log("loading lotteries ...")
     const filters = [
       {
-        dataSize: 184
+        dataSize: 192
       }
     ];
     getFilteredProgramAccounts(connection,toPublicKey(programIds().lottery),filters)

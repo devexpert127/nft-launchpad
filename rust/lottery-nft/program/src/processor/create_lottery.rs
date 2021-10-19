@@ -122,8 +122,8 @@ pub fn create_lottery(
         nft_amount: args.nft_amount as u64,
         ticket_price: args.ticket_price,
         ticket_amount: args.ticket_amount as u64,
-        max_ticket_per_wallet: args.max_ticket_per_wallet as u64,
-        sold_amount: 0
+        sold_amount: 0,
+        max_ticket_per_wallet: args.max_ticket_per_wallet as u64
     }
     .serialize(&mut *accounts.lottery.data.borrow_mut())?;
     

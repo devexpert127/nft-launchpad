@@ -196,6 +196,7 @@ export const LOTTERY_SCHEMA = new Map<any, any>([
         ['ticketPrice', 'u64'],
         ['ticketAmount', 'u32'],
         ['nftAmount', 'u32'],
+        ['maxTicketPerWallet', 'u32'],
       ],
     },
   ],
