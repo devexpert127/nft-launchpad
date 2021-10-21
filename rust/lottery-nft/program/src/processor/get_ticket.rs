@@ -91,7 +91,7 @@ pub fn get_ticket<'r, 'b: 'r>(
     program_id: &Pubkey,
     accounts: &'r [AccountInfo<'b>],
 ) -> ProgramResult {
-    msg!("+ Processing GetTicket");
+    msg!("+ Process Get Ticket");
     let accounts = parse_accounts(program_id, accounts)?;
 
     // Load the clock, used for various lottery timing.
@@ -103,7 +103,7 @@ pub fn get_ticket<'r, 'b: 'r>(
     if lottery.sold_amount >= lottery.ticket_amount {
         return Err(LotteryError::ExceedTiketAmount.into());
     }
-    
+
     // Can't buy a ticket on an lottery that isn't running.
     if lottery.state != LotteryState::Started {
         return Err(LotteryError::InvalidState.into());
@@ -137,15 +137,13 @@ pub fn get_ticket<'r, 'b: 'r>(
         )?;
         BidderPocket{
             pocketid:*accounts.bidder_pocket.key,
-            count:0,
+            count:1,
         }
         .serialize(&mut *accounts.bidder_pocket.data.borrow_mut())?;
     } else {
         let mut pocket = BidderPocket::from_account_info(accounts.bidder_pocket)?;
 
         if (pocket.count < lottery.max_ticket_per_wallet) {
-            pocket.count += 1;
-            pocket.serialize(&mut *accounts.bidder_pocket.data.borrow_mut())?;
         } else {
             return Err(LotteryError::ExceedTiketAmount.into());
         }
@@ -209,6 +207,11 @@ pub fn get_ticket<'r, 'b: 'r>(
             winned_nft_number:winned_nft_num
         }
         .serialize(&mut *accounts.ticket.data.borrow_mut())?;
+    }
+
+    if (pocket.count < lottery.max_ticket_per_wallet) {
+        pocket.count += 1;
+        pocket.serialize(&mut *accounts.bidder_pocket.data.borrow_mut())?;
     }
 
     lottery.sold_amount += 1;
