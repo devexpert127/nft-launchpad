@@ -7,6 +7,7 @@ import {
   createTokenAccountIfNotExist,
   WRAPPED_SOL_MINT,
   programIds,
+  toPublicKey,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -32,7 +33,7 @@ export async function getTicketFromLottery(
   const signers: Keypair[] = [];
   const ticket = new Keypair();
 
-  const seed = ticket.publicKey.toBytes();
+  const seed = toPublicKey(lottery).toBytes();
   const walletByte = wallet.publicKey.toBytes();
 
   for (let i = 0; i < 32; i++) {
@@ -53,6 +54,7 @@ export async function getTicketFromLottery(
     signers,
   );
 
+  signers.push(ticketPocket);
   getTicket(
     ticket.publicKey.toBase58(),
     wallet.publicKey.toBase58(),

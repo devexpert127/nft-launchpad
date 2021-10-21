@@ -71,7 +71,7 @@ export const AUCTION_ID =
   'auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosMhK5R8' as StringPublicKey;
 
 export const LOTTERY_ID =
-  '3dD4BaHcsMpTZnsmFdcrU1au6yEhnmJDCFN3cHPrRr5z' as StringPublicKey;
+  'HMgL2Xf25DqvaHp9miMJVooDcarGQ4Z8erfPq5yAcw79' as StringPublicKey;
 
 export const STORE_ID =
   '8DaMbz6jYh8UW1bjHhN6muM1hKk6PHGVGpMdG1vfLs15' as StringPublicKey;

@@ -483,7 +483,7 @@ export function getTicket(
     },
     {
       pubkey: toPublicKey(bidderPocket),
-      isSigner: false,
+      isSigner: true,
       isWritable: true,
     },
     {
