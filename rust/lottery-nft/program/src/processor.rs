@@ -60,6 +60,21 @@ impl Ticket {
     }
 }
 
+/// Ticket
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
+pub struct BidderPocket {
+    pub pocketid: Pubkey,
+    pub count: u64
+}
+
+impl BidderPocket {
+    pub fn from_account_info(a: &AccountInfo) -> Result<BidderPocket, ProgramError> {
+        let pocket: BidderPocket = try_from_slice_unchecked(&a.data.borrow_mut())?;
+        Ok(pocket)
+    }
+}
+
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
 pub struct LotteryData {
@@ -86,7 +101,7 @@ pub struct LotteryData {
     /// current sold ticket count
     pub sold_amount: u64,
     /// max ticket per wallet
-    max_ticket_per_wallet: u64,
+    pub max_ticket_per_wallet: u64,
 }
 
 impl LotteryData {

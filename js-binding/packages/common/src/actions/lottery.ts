@@ -453,6 +453,7 @@ export async function setLotteryAuthority(
 export function getTicket(
   ticket: StringPublicKey,
   bidderPubkey: StringPublicKey,
+  bidderPocket: StringPublicKey,
   bidderTokenPubkey: StringPublicKey,
   poolTokenPubkey: StringPublicKey,
   tokenMintPubkey: StringPublicKey,
@@ -479,6 +480,11 @@ export function getTicket(
       pubkey: toPublicKey(bidderPubkey),
       isSigner: true,
       isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(bidderPocket),
+      isSigner: false,
+      isWritable: true,
     },
     {
       pubkey: toPublicKey(bidderTokenPubkey),

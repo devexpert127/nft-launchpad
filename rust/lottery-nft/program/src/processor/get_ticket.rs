@@ -5,7 +5,7 @@ use borsh::try_to_vec_with_schema;
 use crate::{
     errors::LotteryError,
     processor::{
-        LotteryData, LotteryState, Ticket,TicketState
+        LotteryData, LotteryState, Ticket, TicketState, BidderPocket
     },
     utils::{
         assert_derivation, assert_initialized, assert_owned_by, assert_signer,
@@ -40,6 +40,7 @@ struct Accounts<'a, 'b: 'a> {
     lottery: &'a AccountInfo<'b>,
     ticket: &'a AccountInfo<'b>,
     bidder: &'a AccountInfo<'b>,
+    bidder_pocket: &'a AccountInfo<'b>,
     bidder_token: &'a AccountInfo<'b>,
     pool_token: &'a AccountInfo<'b>,
     mint: &'a AccountInfo<'b>,
@@ -59,6 +60,7 @@ fn parse_accounts<'a, 'b: 'a>(
         lottery: next_account_info(account_iter)?,
         ticket: next_account_info(account_iter)?,
         bidder: next_account_info(account_iter)?,
+        bidder_pocket: next_account_info(account_iter)?,
         bidder_token: next_account_info(account_iter)?,
         pool_token: next_account_info(account_iter)?,
         mint: next_account_info(account_iter)?,
@@ -106,6 +108,49 @@ pub fn get_ticket<'r, 'b: 'r>(
     if lottery.state != LotteryState::Started {
         return Err(LotteryError::InvalidState.into());
     }
+    
+    let ticket_seeds = [
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        &(*accounts.ticket.key).to_bytes(),
+    ];
+
+    // Derive the address we'll store the lottery in, and confirm it matches what we expected the
+    // user to provide.
+    let (ticket_authority, ticket_bump) = Pubkey::find_program_address(&ticket_seeds, program_id);
+
+    if accounts.bidder_pocket.data_is_empty() {
+        // Create bidder pocket account with enough space for a tickets tracking.
+        create_or_allocate_account_raw(
+            *program_id,
+            accounts.bidder_pocket,
+            accounts.rent,
+            accounts.system,
+            accounts.bidder,
+            mem::size_of::<Ticket>(),
+            &[
+                PREFIX.as_bytes(),
+                program_id.as_ref(),
+                &(*accounts.bidder_pocket.key).to_bytes(),
+                &[ticket_bump],
+            ],
+        )?;
+        BidderPocket{
+            pocketid:*accounts.bidder_pocket.key,
+            count:0,
+        }
+        .serialize(&mut *accounts.bidder_pocket.data.borrow_mut())?;
+    } else {
+        let mut pocket = BidderPocket::from_account_info(accounts.bidder_pocket)?;
+
+        if (pocket.count < lottery.max_ticket_per_wallet) {
+            pocket.count += 1;
+            pocket.serialize(&mut *accounts.bidder_pocket.data.borrow_mut())?;
+        } else {
+            return Err(LotteryError::ExceedTiketAmount.into());
+        }
+    }
+    
     let token_authority_seeds = &[
         PREFIX.as_bytes(),
         program_id.as_ref(),
@@ -141,16 +186,6 @@ pub fn get_ticket<'r, 'b: 'r>(
         ticket_state = ticket_state.win()?;
     }
     
-    let ticket_seeds = [
-        PREFIX.as_bytes(),
-        program_id.as_ref(),
-        &(*accounts.ticket.key).to_bytes(),
-    ];
-
-    // Derive the address we'll store the lottery in, and confirm it matches what we expected the
-    // user to provide.
-    let (ticket_authority, ticket_bump) = Pubkey::find_program_address(&ticket_seeds, program_id);
-    
     if accounts.ticket.data_is_empty() {
         // Create lottery account with enough space for a tickets tracking.
         create_or_allocate_account_raw(
@@ -175,6 +210,7 @@ pub fn get_ticket<'r, 'b: 'r>(
         }
         .serialize(&mut *accounts.ticket.data.borrow_mut())?;
     }
+
     lottery.sold_amount += 1;
     lottery.serialize(&mut *accounts.lottery.data.borrow_mut())?;
 

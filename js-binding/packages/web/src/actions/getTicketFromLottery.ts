@@ -31,6 +31,16 @@ export async function getTicketFromLottery(
 
   const signers: Keypair[] = [];
   const ticket = new Keypair();
+
+  const seed = ticket.publicKey.toBytes();
+  const walletByte = wallet.publicKey.toBytes();
+
+  for (let i = 0; i < 32; i++) {
+    seed[i] += walletByte[i];
+  }
+
+  const ticketPocket = Keypair.fromSeed(seed);
+
   signers.push(ticket);
 
   const userWsolToken = await createTokenAccountIfNotExist(
@@ -46,6 +56,7 @@ export async function getTicketFromLottery(
   getTicket(
     ticket.publicKey.toBase58(),
     wallet.publicKey.toBase58(),
+    ticketPocket.publicKey.toBase58(),
     userWsolToken.toBase58(),
     lotteryData.tokenPool,
     lotteryData.tokenMint,

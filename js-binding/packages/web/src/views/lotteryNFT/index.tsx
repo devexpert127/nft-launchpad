@@ -44,7 +44,7 @@ export const CreateLotteryNFTView = () => {
 
   const [storeID, setStoreID] = useState('');
   const [mintAddress, setMintAddress] = useState(QUOTE_MINT.toBase58());
-  const [enddate, setEndDate] = useState(moment().unix()+3 * 60);
+  const [enddate, setEndDate] = useState(moment().unix()+60 * 60);
   const [ticketPrice, setTicketPrice] = useState(1);
   const [ticketAmount, setTicketAmount] = useState(5);
   const [nftAmount, setNFTAmount] = useState(3);
@@ -112,16 +112,21 @@ export const CreateLotteryNFTView = () => {
     });
   }
 
-  function getLotteryStatus(state:string){
-    return state === "0"?"Created":state === "1"?"Started":"Ended";
+  function getLotteryStatus(lotteryData){
+    const curTimestamp = moment().unix();
+    if(lotteryData.endLotteryAt.toNumber() < curTimestamp){
+      return "Ended";
+    }
+    return lotteryData.state === 0?"Created":lotteryData.state === 1?"Started":"Ended";
   }
+  
   async function loadLotteryData() {
     console.log("loading ...")
     let lotteryBuffer = await loadAccount(connection,toPublicKey(lotteryID),toPublicKey(programIds().lottery));
     let lotteryData = decodeLotteryData(lotteryBuffer);
     
     setLotteryData(lotteryData);
-    setLotteryStatus(getLotteryStatus(lotteryData.state.toString()));
+    setLotteryStatus(getLotteryStatus(lotteryData));
     setLotteryStoreId(lotteryData.lotteryStoreId);
     setNFTAmount(lotteryData.nftAmount.toNumber());
     
@@ -253,7 +258,7 @@ export const CreateLotteryNFTView = () => {
                     <br/>
                     store id - {lottery.lotteryStoreId}
                     <br/>
-                    lottery status - {getLotteryStatus(lottery.state.toString())}
+                    lottery status - {getLotteryStatus(lottery)}
                     <br/>
                     <Link to={`/lottery-details/`+lottery.lotteryId}>View Details</Link>
                     {

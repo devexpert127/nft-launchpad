@@ -198,6 +198,7 @@ export const ClaimView = () => {
     <>
       <div>
         <br />
+        {lotteryData.state === undefined?'':getLotteryStatus(lotteryData)}
         {
           !wallet.connected?"please connect your wallet":
           lotteryData.state === undefined?"can't load lottery data":
