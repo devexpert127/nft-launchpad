@@ -137,7 +137,7 @@ pub fn get_ticket<'r, 'b: 'r>(
         )?;
         BidderPocket{
             pocketid:*accounts.bidder_pocket.key,
-            count:1,
+            count:0,
         }
         .serialize(&mut *accounts.bidder_pocket.data.borrow_mut())?;
     } else {
@@ -209,6 +209,7 @@ pub fn get_ticket<'r, 'b: 'r>(
         .serialize(&mut *accounts.ticket.data.borrow_mut())?;
     }
 
+    let mut pocket = BidderPocket::from_account_info(accounts.bidder_pocket)?;
     if (pocket.count < lottery.max_ticket_per_wallet) {
         pocket.count += 1;
         pocket.serialize(&mut *accounts.bidder_pocket.data.borrow_mut())?;
