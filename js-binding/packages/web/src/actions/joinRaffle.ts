@@ -7,6 +7,7 @@ import {
   utils,
   LotteryData,
   createSplKeypair,
+  toPublicKey,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { closeAccount } from '@project-serum/serum/lib/token-instructions';
@@ -46,9 +47,18 @@ export async function joinRaffle(
   );
   signers.push(userWsolKeypair);
 
+  const seed = toPublicKey(lottery).toBytes();
+  const walletByte = wallet.publicKey.toBytes();
+
+  for (let i = 0; i < 32; i++) {
+    seed[i] += walletByte[i];
+  }
+
+  const ticketPocket = Keypair.fromSeed(seed);
   await getTicket(
     ticketKeypair.publicKey.toBase58(),
     wallet.publicKey.toBase58(),
+    ticketPocket.publicKey.toBase58(),
     userWsolKeypair.publicKey.toBase58(),
     lotteryData.tokenPool,
     lotteryData.tokenMint,
