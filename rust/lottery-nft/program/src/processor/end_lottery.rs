@@ -1,7 +1,13 @@
 use crate::{
     errors::LotteryError,
     processor::{LotteryData, LotteryState, Ticket, TicketState},
-    utils::{assert_derivation, assert_owned_by, assert_signer, create_or_allocate_account_raw},
+    utils::{
+        assert_derivation,
+        assert_owned_by,
+        assert_signer,
+        create_or_allocate_account_raw,
+        is_zero_account
+    },
     PREFIX,
 };
 
@@ -37,6 +43,12 @@ fn parse_accounts<'a, 'b: 'a>(
     };
     assert_owned_by(accounts.lottery, program_id)?;
     assert_signer(accounts.authority)?;
+
+    // check if given lottery is initialized
+    if is_zero_account(accounts.lottery) {
+        return Err(LotteryError::NotInitializedProgramData.into());
+    }
+    
     Ok(accounts)
 }
 

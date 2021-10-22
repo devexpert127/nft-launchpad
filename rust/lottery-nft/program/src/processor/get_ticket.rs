@@ -8,12 +8,19 @@ use crate::{
         LotteryData, LotteryState, Ticket, TicketState, BidderPocket
     },
     utils::{
-        assert_derivation, assert_initialized, assert_owned_by, assert_signer,
-        assert_token_program_matches_package, create_or_allocate_account_raw, spl_token_transfer,
+        assert_derivation,
+        assert_initialized,
+        assert_owned_by,
+        assert_signer,
+        assert_token_program_matches_package,
+        create_or_allocate_account_raw,
+        spl_token_transfer,
         carryout_lotter,
         TokenTransferParams,
+        is_zero_account,
     },
     PREFIX,
+    constant::*,
 };
 
 use {
@@ -35,6 +42,7 @@ use {
     spl_token::state::Account,
     std::mem,
 };
+use std::str::FromStr;
 
 struct Accounts<'a, 'b: 'a> {
     lottery: &'a AccountInfo<'b>,
@@ -71,6 +79,11 @@ fn parse_accounts<'a, 'b: 'a>(
         clock_sysvar: next_account_info(account_iter)?,
     };
 
+    // check if given store is initialized
+    if is_zero_account(accounts.lottery) {
+        return Err(LotteryError::NotInitializedProgramData.into());
+    }
+
     assert_owned_by(accounts.lottery, program_id)?;
     assert_owned_by(accounts.bidder_token, &spl_token::id())?;
 
@@ -78,6 +91,16 @@ fn parse_accounts<'a, 'b: 'a>(
     assert_signer(accounts.bidder)?;
     assert_signer(accounts.transfer_authority)?;
     assert_token_program_matches_package(accounts.token_program)?;
+
+    // check if rent sysvar program id is correct
+    if *accounts.rent.key != Pubkey::from_str(RENT_SYSVAR_ID).map_err(|_| LotteryError::InvalidPubkey)? {
+        return Err(LotteryError::InvalidRentSysvarId.into());
+    }
+
+    // check if system program id is correct
+    if *accounts.system.key != Pubkey::from_str(SYSTEM_PROGRAM_ID).map_err(|_| LotteryError::InvalidPubkey)? {
+        return Err(LotteryError::InvalidSystemProgramId.into());
+    }
 
     if *accounts.token_program.key != spl_token::id() {
         return Err(LotteryError::InvalidTokenProgram.into());

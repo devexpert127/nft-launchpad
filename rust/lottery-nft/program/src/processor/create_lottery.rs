@@ -5,7 +5,14 @@ use crate::{
     processor::{
         LotteryData, LotteryState, Ticket, TicketState
     },
-    utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw, spl_token_create_account,TokenCreateAccount},
+    utils::{
+        assert_derivation, 
+        assert_owned_by, 
+        create_or_allocate_account_raw, 
+        spl_token_create_account,
+        TokenCreateAccount,
+        is_zero_account
+    },
     PREFIX,
     constant::*,
 };
@@ -88,6 +95,10 @@ fn parse_accounts<'a, 'b: 'a>(
         return Err(LotteryError::SignatureMissing.into());
     }
 
+    // check if given store is initialized
+    if is_zero_account(accounts.lottery_store) {
+        return Err(LotteryError::NotInitializedProgramData.into());
+    }
     Ok(accounts)
 }
 pub fn create_lottery(

@@ -5,9 +5,15 @@ use crate::{
     errors::LotteryError,
     processor::{LotteryData,Ticket, LotteryState, TicketState},
     utils::{
-        assert_derivation, assert_initialized, assert_owned_by, assert_signer,
-        assert_token_program_matches_package, create_or_allocate_account_raw, spl_token_transfer,
+        assert_derivation,
+        assert_initialized,
+        assert_owned_by,
+        assert_signer,
+        assert_token_program_matches_package,
+        create_or_allocate_account_raw,
+        spl_token_transfer,
         TokenTransferParams,
+        is_zero_account,
     },
     PREFIX,
 };
@@ -51,6 +57,16 @@ fn parse_accounts<'a, 'b: 'a>(
         token_program: next_account_info(account_iter)?,
     };
 
+    // check if given store is initialized
+    if is_zero_account(accounts.lottery) {
+        return Err(LotteryError::NotInitializedProgramData.into());
+    }
+    
+    // check if given store is initialized
+    if is_zero_account(accounts.ticket) {
+        return Err(LotteryError::NotInitializedProgramData.into());
+    }
+    
     assert_owned_by(accounts.lottery, program_id)?;
     assert_token_program_matches_package(accounts.token_program)?;
 
