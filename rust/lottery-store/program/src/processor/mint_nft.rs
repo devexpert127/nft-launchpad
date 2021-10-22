@@ -54,7 +54,6 @@ fn parse_accounts<'a, 'b: 'a>(
     return Err(StoreError::InvalidTokenProgram.into());
   }
 
-  
   // check if rent sysvar program id is correct
   if *accounts.rent.key != Pubkey::from_str(RENT_SYSVAR_ID).map_err(|_| StoreError::InvalidPubkey)? {
     return Err(StoreError::InvalidRentSysvarId.into());
@@ -65,18 +64,13 @@ fn parse_accounts<'a, 'b: 'a>(
     return Err(StoreError::InvalidSystemProgramId.into());
   }
 
+  // check if token_mint is signer
+  if !accounts.payer.is_signer {
+    return Err(StoreError::SignatureMissing.into());
+  }
+
   // check if nftmeta is signer
   if !accounts.nftmeta.is_signer {
-    return Err(StoreError::SignatureMissing.into());
-  }
-
-  // check if token_mint is signer
-  if !accounts.token_mint.is_signer {
-    return Err(StoreError::SignatureMissing.into());
-  }
-
-  // check if token_pool is signer
-  if !accounts.token_pool.is_signer {
     return Err(StoreError::SignatureMissing.into());
   }
 
