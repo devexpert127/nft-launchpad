@@ -7,7 +7,7 @@ use crate::{
     },
     utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw, spl_token_create_account,TokenCreateAccount},
     PREFIX,
-    
+    constant::*,
 };
 
 use {
@@ -22,6 +22,7 @@ use {
     },
     std::mem,
 };
+use std::str::FromStr;
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq)]
@@ -66,6 +67,27 @@ fn parse_accounts<'a, 'b: 'a>(
         rent: next_account_info(account_iter)?,
         system: next_account_info(account_iter)?,
     };
+
+    // check if rent sysvar program id is correct
+    if *accounts.rent.key != Pubkey::from_str(RENT_SYSVAR_ID).map_err(|_| LotteryError::InvalidPubkey)? {
+        return Err(LotteryError::InvalidRentSysvarId.into());
+    }
+
+    // check if system program id is correct
+    if *accounts.system.key != Pubkey::from_str(SYSTEM_PROGRAM_ID).map_err(|_| LotteryError::InvalidPubkey)? {
+        return Err(LotteryError::InvalidSystemProgramId.into());
+    }
+
+    // check if store id is signer
+    if !accounts.payer.is_signer {
+        return Err(LotteryError::SignatureMissing.into());
+    }
+
+    // check if store id is signer
+    if !accounts.token_pool.is_signer {
+        return Err(LotteryError::SignatureMissing.into());
+    }
+
     Ok(accounts)
 }
 pub fn create_lottery(
