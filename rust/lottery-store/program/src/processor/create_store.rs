@@ -17,6 +17,7 @@ use {
         pubkey::Pubkey,
     },
 };
+use std::str::FromStr;
 
 struct Accounts<'a, 'b: 'a> {
     payer: &'a AccountInfo<'b>,

@@ -5,6 +5,7 @@ pub mod errors;
 pub mod instruction;
 pub mod processor;
 pub mod utils;
+pub mod constant;
 // Export current sdk types for downstream users building with a different sdk version
 pub use solana_program;
 
