@@ -66,7 +66,9 @@ fn parse_accounts<'a, 'b: 'a>(
     if is_zero_account(accounts.ticket) {
         return Err(LotteryError::NotInitializedProgramData.into());
     }
-    
+
+    assert_signer(accounts.claimer)?;
+
     assert_owned_by(accounts.lottery, program_id)?;
     assert_token_program_matches_package(accounts.token_program)?;
 

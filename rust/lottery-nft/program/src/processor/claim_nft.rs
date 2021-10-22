@@ -66,6 +66,7 @@ fn parse_accounts<'a, 'b: 'a>(
 
     assert_owned_by(accounts.lottery, program_id)?;
     assert_token_program_matches_package(accounts.token_program)?;
+    assert_signer(accounts.claimer)?;
 
     if *accounts.token_program.key != spl_token::id() {
         return Err(LotteryError::InvalidTokenProgram.into());
