@@ -102,13 +102,13 @@ pub fn assert_token_program_matches_package(token_program_info: &AccountInfo) ->
     Ok(())
 }
 
-pub fn assert_program_account(program_id:&Pubkey, key: &Pubkey)->Result<(), ProgramError>{
+pub fn assert_program_account(store_id:&Pubkey, program_id:&Pubkey, authority: &Pubkey)->Result<(), ProgramError>{
     let seeds = [
-        program_id.as_ref(),
+        store_id.as_ref(),
     ];
 
     let (program_data_key, _bump) = Pubkey::find_program_address(&seeds, program_id);
-    if program_data_key != *key {
+    if program_data_key != *authority {
         return Err(StoreError::InvalidProgramAddress.into());
     }
     else {

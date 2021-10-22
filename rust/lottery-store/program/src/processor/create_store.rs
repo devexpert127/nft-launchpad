@@ -64,7 +64,7 @@ fn parse_accounts<'a, 'b: 'a>(
         return Err(StoreError::SignatureMissing.into());
     }
 
-    assert_program_account(program_id, accounts.authority.key)?;
+    assert_program_account(accounts.store_id.key, program_id, accounts.authority.key)?;
 
     Ok(accounts)
 }
