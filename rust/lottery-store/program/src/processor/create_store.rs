@@ -59,7 +59,7 @@ fn parse_accounts<'a, 'b: 'a>(
         return Err(StoreError::InvalidSystemProgramId.into());
     }
 
-    // check if super user is signer
+    // check if store id is signer
     if !accounts.store_id.is_signer {
         return Err(StoreError::SignatureMissing.into());
     }

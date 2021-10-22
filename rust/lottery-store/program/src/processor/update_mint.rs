@@ -1,8 +1,10 @@
 use crate::{
+  errors::StoreError,
   processor::{
       NFTMeta, MintNFTArgs, MAX_URI_LENGTH
   },
-  utils::{assert_owned_by},
+  utils::{assert_owned_by, is_zero_account},
+  constant::*,
 };
 
 use {
@@ -14,6 +16,8 @@ use {
       pubkey::Pubkey,
   },
 };
+
+use std::str::FromStr;
 
 struct Accounts<'a, 'b: 'a> {
   payer: &'a AccountInfo<'b>,
@@ -35,6 +39,21 @@ fn parse_accounts<'a, 'b: 'a>(
   };
 
   assert_owned_by(accounts.nftmeta, program_id)?;
+
+  // check if rent sysvar program id is correct
+  if *accounts.rent.key != Pubkey::from_str(RENT_SYSVAR_ID).map_err(|_| StoreError::InvalidPubkey)? {
+    return Err(StoreError::InvalidRentSysvarId.into());
+  }
+
+  // check if system program id is correct
+  if *accounts.system.key != Pubkey::from_str(SYSTEM_PROGRAM_ID).map_err(|_| StoreError::InvalidPubkey)? {
+    return Err(StoreError::InvalidSystemProgramId.into());
+  }
+
+  // check if given store is initialized
+  if is_zero_account(accounts.nftmeta) {
+    return Err(StoreError::NotInitializedProgramData.into());
+  }
 
   Ok(accounts)
 }

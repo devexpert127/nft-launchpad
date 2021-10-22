@@ -115,3 +115,15 @@ pub fn assert_program_account(store_id:&Pubkey, program_id:&Pubkey, authority: &
         Ok(())
     }
 }
+
+pub fn is_zero_account(account_info:&AccountInfo)->bool{
+    let account_data: &[u8] = &account_info.data.borrow();
+    let len = account_data.len();
+    let mut is_zero = true;
+    for i in 0..len-1 {
+        if account_data[i] != 0 {
+            is_zero = false;
+        }
+    }
+    is_zero
+}

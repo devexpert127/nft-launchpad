@@ -3,7 +3,8 @@ use crate::{
   processor::{
     NFTMeta, StoreData, MintNFTArgs, MAX_NFTMETA_LEN, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH
   },
-  utils::{create_or_allocate_account_raw, assert_owned_by, assert_token_program_matches_package},
+  utils::{create_or_allocate_account_raw, assert_owned_by, assert_token_program_matches_package, is_zero_account},
+  constant::*,
 };
 
 use {
@@ -15,6 +16,7 @@ use {
       pubkey::Pubkey,
   },
 };
+use std::str::FromStr;
 
 struct Accounts<'a, 'b: 'a> {
   payer: &'a AccountInfo<'b>,
@@ -50,6 +52,37 @@ fn parse_accounts<'a, 'b: 'a>(
 
   if *accounts.token_program.key != spl_token::id() {
     return Err(StoreError::InvalidTokenProgram.into());
+  }
+
+  
+  // check if rent sysvar program id is correct
+  if *accounts.rent.key != Pubkey::from_str(RENT_SYSVAR_ID).map_err(|_| StoreError::InvalidPubkey)? {
+    return Err(StoreError::InvalidRentSysvarId.into());
+  }
+
+  // check if system program id is correct
+  if *accounts.system.key != Pubkey::from_str(SYSTEM_PROGRAM_ID).map_err(|_| StoreError::InvalidPubkey)? {
+    return Err(StoreError::InvalidSystemProgramId.into());
+  }
+
+  // check if nftmeta is signer
+  if !accounts.nftmeta.is_signer {
+    return Err(StoreError::SignatureMissing.into());
+  }
+
+  // check if token_mint is signer
+  if !accounts.token_mint.is_signer {
+    return Err(StoreError::SignatureMissing.into());
+  }
+
+  // check if token_pool is signer
+  if !accounts.token_pool.is_signer {
+    return Err(StoreError::SignatureMissing.into());
+  }
+
+  // check if given store is initialized
+  if is_zero_account(accounts.store_id) {
+    return Err(StoreError::NotInitializedProgramData.into());
   }
 
   Ok(accounts)
