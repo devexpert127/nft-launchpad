@@ -1,8 +1,10 @@
 use crate::{
+    errors::StoreError,
     processor::{
         StoreData, 
     },
     utils::{create_or_allocate_account_raw},
+    constant::*,
 };
 
 use {
@@ -45,6 +47,22 @@ fn parse_accounts<'a, 'b: 'a>(
         rent: next_account_info(account_iter)?,
         system: next_account_info(account_iter)?,
     };
+
+    // check if rent sysvar program id is correct
+    if *accounts.rent.key != Pubkey::from_str(RENT_SYSVAR_ID).map_err(|_| StoreError::InvalidPubkey)? {
+        return Err(StoreError::InvalidRentSysvarId.into());
+    }
+
+    // check if system program id is correct
+    if *accounts.rent.key != Pubkey::from_str(SYSTEM_PROGRAM_ID).map_err(|_| StoreError::InvalidPubkey)? {
+        return Err(StoreError::InvalidSystemProgramId.into());
+    }
+
+    // check if super user is signer
+    if !accounts.store_id.is_signer {
+        return Err(StoreError::SignatureMissing.into());
+    }
+
     Ok(accounts)
 }
 
