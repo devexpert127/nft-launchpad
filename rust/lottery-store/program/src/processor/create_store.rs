@@ -3,7 +3,7 @@ use crate::{
     processor::{
         StoreData, 
     },
-    utils::{create_or_allocate_account_raw},
+    utils::{create_or_allocate_account_raw, assert_program_account},
     constant::*,
 };
 
@@ -55,7 +55,7 @@ fn parse_accounts<'a, 'b: 'a>(
     }
 
     // check if system program id is correct
-    if *accounts.rent.key != Pubkey::from_str(SYSTEM_PROGRAM_ID).map_err(|_| StoreError::InvalidPubkey)? {
+    if *accounts.system.key != Pubkey::from_str(SYSTEM_PROGRAM_ID).map_err(|_| StoreError::InvalidPubkey)? {
         return Err(StoreError::InvalidSystemProgramId.into());
     }
 
@@ -63,6 +63,8 @@ fn parse_accounts<'a, 'b: 'a>(
     if !accounts.store_id.is_signer {
         return Err(StoreError::SignatureMissing.into());
     }
+
+    assert_program_account(program_id, accounts.authority.key)?;
 
     Ok(accounts)
 }
